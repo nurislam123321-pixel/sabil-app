@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/sabil-app/">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="Sabil — мусульманское приложение: время намаза, Коран, зикр, қаза, кибла, мечети рядом.">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0F5E48">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Sabil">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Sabil</title>
+  <style>html,body{margin:0;height:100%;background:#0A3A2C}#sabil-loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:linear-gradient(35deg,#0A3A2C,#139072);color:#F7F3E8;font-family:system-ui,sans-serif}#sabil-loading b{font-size:34px;letter-spacing:1px}#sabil-loading span{color:#CFE6DC;font-size:14px}</style>
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <div id="sabil-loading"><b>Sabil</b><span>Загружаем приложение…</span></div>
+  <!--
+    You can customize the "flutter_bootstrap.js" script.
+    This is useful to provide a custom configuration to the Flutter loader
+    or to give the user feedback during the initialization process.
+
+    For more details:
+    * https://docs.flutter.dev/platform-integration/web/initialization
+  -->
+  <script src="flutter_bootstrap.js" async></script>
+  <script>window.addEventListener("flutter-first-frame",function(){var l=document.getElementById("sabil-loading");if(l)l.remove();});</script>
+</body>
+</html>
