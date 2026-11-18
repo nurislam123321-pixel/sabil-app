@@ -39,6 +39,9 @@
 <body>
   <!-- Пока приложение загружается — только фон заставки, без значка: значок покажет сама заставка. -->
   <div id="sabil-loading"></div>
+  <!-- Безопасные края экрана iPhone (часы сверху, полоска «домой» снизу): приложение узнаёт их через sabilInset(). -->
+  <div id="sabil-safe" style="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
+  <script>window.sabilInset=function(side){var d=document.getElementById("sabil-safe");if(!d)return 0;var v=parseFloat(getComputedStyle(d)["padding-"+side]);return isNaN(v)?0:v;};</script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
