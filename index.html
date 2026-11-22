@@ -41,6 +41,8 @@
   <div id="sabil-loading"></div>
   <!-- Безопасные края экрана iPhone (часы сверху, полоска «домой» снизу): приложение узнаёт их через sabilInset(). -->
   <div id="sabil-safe" style="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
+  <!-- Короткие звуки (бусина тасбиха): Web Audio — звучит мгновенно на КАЖДОЕ нажатие, звуки могут накладываться. -->
+  <script>window.sabilSfx=(function(){var ctx=null,bufs={},urls={};function c(){if(!ctx){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ctx=new A();try{if(navigator.audioSession)navigator.audioSession.type="transient";}catch(e){}}return ctx;}function load(id,url){urls[id]=url;var x=c();if(!x||bufs[id])return;fetch(url).then(function(r){return r.arrayBuffer();}).then(function(a){return new Promise(function(ok,no){x.decodeAudioData(a,ok,no);});}).then(function(b){bufs[id]=b;}).catch(function(){});}return{load:load,play:function(id){var x=c();if(!x)return;if(x.state!=="running")x.resume();var b=bufs[id];if(!b){if(urls[id])load(id,urls[id]);return;}var s=x.createBufferSource();s.buffer=b;s.connect(x.destination);s.start(0);}};})();</script>
   <script>window.sabilInset=function(side){var d=document.getElementById("sabil-safe");if(!d)return 0;var v=parseFloat(getComputedStyle(d)["padding-"+side]);return isNaN(v)?0:v;};</script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
