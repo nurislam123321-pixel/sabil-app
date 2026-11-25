@@ -33,7 +33,7 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
 
   <title>Sabil</title>
-  <style>html,body{margin:0;height:100%;background:#FAF6F0}</style>
+  <style>html,body{margin:0;height:100%;background:#FAF6F0;overscroll-behavior:none}</style>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
@@ -96,6 +96,22 @@
   <script>window.sabilSfx=(function(){var ctx=null,bufs={},urls={};function c(){if(!ctx){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ctx=new A();try{if(navigator.audioSession)navigator.audioSession.type="transient";}catch(e){}}return ctx;}function load(id,url){urls[id]=url;var x=c();if(!x||bufs[id])return;fetch(url).then(function(r){return r.arrayBuffer();}).then(function(a){return new Promise(function(ok,no){x.decodeAudioData(a,ok,no);});}).then(function(b){bufs[id]=b;}).catch(function(){});}return{load:load,play:function(id){var x=c();if(!x)return;if(x.state!=="running")x.resume();var b=bufs[id];if(!b){if(urls[id])load(id,urls[id]);return;}var s=x.createBufferSource();s.buffer=b;s.connect(x.destination);s.start(0);}};})();</script>
   <!-- Копия данных файлом: «Поделиться» (iPhone: Сохранить в Файлы) или обычное скачивание; выбор файла. Ничего никуда не отправляется. -->
   <script>window.sabilBackup={copy:async function(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){}var t=document.createElement("textarea");t.value=text;t.setAttribute("readonly","");t.style.cssText="position:fixed;left:0;top:0;opacity:0";document.body.appendChild(t);t.select();t.setSelectionRange(0,text.length);var ok=false;try{ok=document.execCommand("copy");}catch(e){}t.remove();return ok;},save:async function(name,text){var f=null;try{f=new File([text],name,{type:"text/plain"});}catch(e){}if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return true;}catch(e){if(e&&e.name==="AbortError")return false;}}var u=URL.createObjectURL(new Blob([text],{type:"text/plain"}));var a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},10000);return true;},pick:function(){return new Promise(function(ok){var i=document.createElement("input");i.type="file";i.accept=".txt,text/plain";i.style.display="none";i.onchange=async function(){var f=i.files&&i.files[0];i.remove();ok(f&&f.size<8000000?await f.text():null);};i.addEventListener("cancel",function(){i.remove();ok(null);});document.body.appendChild(i);i.click();});}};</script>
+  <!-- iPhone: системный жест от края экрана листает историю браузера и выбрасывал из Sabil — гасим его у самого края.
+       Внутри приложения жест «назад» свой (lib/core/swipe_back.dart). -->
+  <script>
+  (function () {
+    var ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    window.sabilIosApp = function () {
+      return ios && (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches);
+    };
+    if (!ios) return;
+    document.addEventListener('touchstart', function (e) {
+      if (e.touches.length !== 1 || !e.cancelable) return;
+      var x = e.touches[0].clientX;
+      if (x < 22 || x > innerWidth - 22) e.preventDefault();
+    }, { passive: false, capture: true });
+  })();
+  </script>
   <script>window.sabilInset=function(side){var d=document.getElementById("sabil-safe");if(!d)return 0;var v=parseFloat(getComputedStyle(d)["padding-"+side]);return isNaN(v)?0:v;};</script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
