@@ -84,10 +84,8 @@
     var slow = setTimeout(function () { el.classList.add('ss-wait'); }, 1300);
     window.addEventListener('flutter-first-frame', function () {
       setTimeout(function () {
-        requestAnimationFrame(function () { requestAnimationFrame(function () {
-          clearTimeout(slow); el.classList.add('off'); setTimeout(function () { el.remove(); }, 260);
-        }); });
-      }, Math.max(0, MIN - (performance.now() - t0)));
+        clearTimeout(slow); el.classList.add('off'); setTimeout(function () { el.remove(); }, 260);
+      }, Math.max(40, MIN - (performance.now() - t0)));
     }, { once: true });
   })();
   </script>
