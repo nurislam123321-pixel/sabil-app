@@ -53,6 +53,62 @@
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
   <script src="flutter_bootstrap.js" async></script>
+  <!-- Работа без интернета: sw.js хранит файлы приложения в телефоне (создаёт tool/web/make_sw.py). -->
+  <script>
+  (function () {
+    if (!('serviceWorker' in navigator)) return;
+    var sw = navigator.serviceWorker, kk = false, reloading = false;
+    try { kk = (localStorage.getItem('flutter.lang') || '').indexOf('kk') >= 0; } catch (e) {}
+    var T = kk
+      ? { ready: 'Sabil енді интернетсіз де ашылады', fresh: 'Sabil жаңа нұсқасы дайын', go: 'Жаңарту' }
+      : { ready: 'Sabil теперь открывается и без интернета', fresh: 'Готова новая версия Sabil', go: 'Обновить' };
+    function note(text, action, fn) {
+      var old = document.getElementById('sabil-note'); if (old) old.remove();
+      var d = document.createElement('div'); d.id = 'sabil-note';
+      d.style.cssText = 'position:fixed;left:16px;right:16px;bottom:calc(96px + env(safe-area-inset-bottom));max-width:420px;margin:0 auto;z-index:99999;background:#0A3A2C;color:#F7F3E8;border:1px solid #E0A85C;border-radius:16px;padding:12px 16px;font:600 15px -apple-system,Roboto,sans-serif;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+      var t = document.createElement('span'); t.textContent = text; t.style.flex = '1'; d.appendChild(t);
+      if (action) {
+        var b = document.createElement('button'); b.textContent = action;
+        b.style.cssText = 'background:#F6DFA4;color:#0A3A2C;border:0;border-radius:12px;padding:9px 14px;font:700 15px -apple-system,Roboto,sans-serif';
+        b.onclick = function () { d.remove(); fn(); }; d.appendChild(b);
+      }
+      var x = document.createElement('button'); x.textContent = '×'; x.setAttribute('aria-label', 'Закрыть');
+      x.style.cssText = 'background:none;color:#BFD9CE;border:0;font-size:22px;padding:0 2px'; x.onclick = function () { d.remove(); };
+      d.appendChild(x); document.body.appendChild(d);
+      if (!action) setTimeout(function () { d.remove(); }, 5000);
+    }
+    var had = !!sw.controller;
+    sw.addEventListener('controllerchange', function () { if (had && !reloading) { reloading = true; location.reload(); } had = true; });
+    function ask(w) { note(T.fresh, T.go, function () { w.postMessage({ type: 'update' }); }); }
+    var reg = null;
+    function watch(w) { if (!w) return; w.addEventListener('statechange', function () { if (w.state === 'installed' && sw.controller) ask(w); }); }
+    sw.register('sw.js').then(function (r) {
+      reg = r;
+      // Новая версия уже скачана в прошлый раз — включаем её сразу при запуске.
+      if (r.waiting && sw.controller) r.waiting.postMessage({ type: 'update' });
+      watch(r.installing); r.addEventListener('updatefound', function () { watch(r.installing); });
+    }).catch(function () {});
+    var last = Date.now();
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && reg && Date.now() - last > 1800000) { last = Date.now(); reg.update().catch(function () {}); }
+    });
+    sw.addEventListener('message', function (e) {
+      var m = e.data || {};
+      if (m.type !== 'offline' || m.part !== 'core' || !m.ok) return;
+      try { if (localStorage.getItem('sabil_offline')) return; localStorage.setItem('sabil_offline', '1'); } catch (x) {}
+      note(T.ready);
+    });
+    window.addEventListener('flutter-first-frame', function () {
+      if (matchMedia('(display-mode: standalone)').matches && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+      setTimeout(function () {
+        var base = document.baseURI;
+        var used = performance.getEntriesByType('resource').map(function (r) { return r.name; })
+          .filter(function (n) { return n.indexOf(base) === 0; }).map(function (n) { return n.slice(base.length).split('?')[0]; });
+        sw.ready.then(function (r) { r.active.postMessage({ type: 'warm', engine: used }); });
+      }, 1500);
+    });
+  })();
+  </script>
   <script>window.addEventListener("flutter-first-frame",function(){var l=document.getElementById("sabil-loading");if(l)l.remove();});</script>
 </body>
 </html>
