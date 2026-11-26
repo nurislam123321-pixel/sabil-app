@@ -110,6 +110,16 @@
       var x = e.touches[0].clientX;
       if (x < 22 || x > innerWidth - 22) e.preventDefault();
     }, { passive: false, capture: true });
+    // Сама страница никогда не должна ехать за пальцем («резинка» Safari) — прокручивает только Sabil.
+    // Иначе двигаются сразу двое, и экран трясётся. Поля ввода не трогаем: в них выделяют текст.
+    document.addEventListener('touchmove', function (e) {
+      if (!e.cancelable) return;
+      var t = e.target && e.target.tagName;
+      if (t === 'INPUT' || t === 'TEXTAREA') return;
+      e.preventDefault();
+    }, { passive: false });
+    // Двойное касание и щипок не увеличивают страницу.
+    document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
   })();
   </script>
   <script>window.sabilInset=function(side){var d=document.getElementById("sabil-safe");if(!d)return 0;var v=parseFloat(getComputedStyle(d)["padding-"+side]);return isNaN(v)?0:v;};</script>
