@@ -80,6 +80,8 @@
     try { if ((localStorage.getItem('flutter.lang') || '').indexOf('kk') >= 0) el.classList.add('kk'); } catch (e) {}
     // Страница перезагрузилась сама (включилась новая версия) — второй раз не проигрываем, просто держим готовый знак.
     try { if (sessionStorage.getItem('sabil_re')) { sessionStorage.removeItem('sabil_re'); el.classList.add('still'); MIN = 0; } } catch (e) {}
+    // Анимация — только при самом первом открытии. Потом — неподвижный знак, пока грузится, и сразу приложение.
+    try { if (localStorage.getItem('sabil_splash_seen') || localStorage.getItem('flutter.onboarded')) { el.classList.add('still'); MIN = 0; } else localStorage.setItem('sabil_splash_seen', '1'); } catch (e) {}
     // Если приложение ещё грузится (первый вход, медленный интернет) — ромб мягко мерцает: видно, что не зависло.
     var slow = setTimeout(function () { el.classList.add('ss-wait'); }, 3000);
     window.addEventListener('flutter-first-frame', function () {
@@ -93,7 +95,7 @@
   <!-- Безопасные края экрана iPhone (часы сверху, полоска «домой» снизу): приложение узнаёт их через sabilInset(). -->
   <div id="sabil-safe" style="position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)"></div>
   <!-- Короткие звуки (бусина тасбиха): Web Audio — звучит мгновенно на КАЖДОЕ нажатие, звуки могут накладываться. -->
-  <script>window.sabilSfx=(function(){var ctx=null,bufs={},urls={};function c(){if(!ctx){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ctx=new A();try{if(navigator.audioSession)navigator.audioSession.type="transient";}catch(e){}}return ctx;}function load(id,url){urls[id]=url;var x=c();if(!x||bufs[id])return;fetch(url).then(function(r){return r.arrayBuffer();}).then(function(a){return new Promise(function(ok,no){x.decodeAudioData(a,ok,no);});}).then(function(b){bufs[id]=b;}).catch(function(){});}return{load:load,play:function(id){var x=c();if(!x)return;if(x.state!=="running")x.resume();var b=bufs[id];if(!b){if(urls[id])load(id,urls[id]);return;}var s=x.createBufferSource();s.buffer=b;s.connect(x.destination);s.start(0);}};})();</script>
+  <script>window.sabilSfx=(function(){var ctx=null,bufs={},urls={};function c(){if(!ctx){var A=window.AudioContext||window.webkitAudioContext;if(!A)return null;ctx=new A();try{if(navigator.audioSession)navigator.audioSession.type="transient";}catch(e){}}return ctx;}function load(id,url){urls[id]=url;var x=c();if(!x||bufs[id])return;fetch(url).then(function(r){return r.arrayBuffer();}).then(function(a){return new Promise(function(ok,no){x.decodeAudioData(a,ok,no);});}).then(function(b){bufs[id]=b;}).catch(function(){});}return{ctx:c,load:load,play:function(id){var x=c();if(!x)return;if(x.state!=="running")x.resume();var b=bufs[id];if(!b){if(urls[id])load(id,urls[id]);return;}var s=x.createBufferSource();s.buffer=b;s.connect(x.destination);s.start(0);}};})();</script>
   <!-- Копия данных файлом: «Поделиться» (iPhone: Сохранить в Файлы) или обычное скачивание; выбор файла. Ничего никуда не отправляется. -->
   <script>window.sabilBackup={copy:async function(text){try{await navigator.clipboard.writeText(text);return true;}catch(e){}var t=document.createElement("textarea");t.value=text;t.setAttribute("readonly","");t.style.cssText="position:fixed;left:0;top:0;opacity:0";document.body.appendChild(t);t.select();t.setSelectionRange(0,text.length);var ok=false;try{ok=document.execCommand("copy");}catch(e){}t.remove();return ok;},save:async function(name,text){var f=null;try{f=new File([text],name,{type:"text/plain"});}catch(e){}if(f&&navigator.canShare&&navigator.canShare({files:[f]})){try{await navigator.share({files:[f]});return true;}catch(e){if(e&&e.name==="AbortError")return false;}}var u=URL.createObjectURL(new Blob([text],{type:"text/plain"}));var a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u);},10000);return true;},pick:function(){return new Promise(function(ok){var i=document.createElement("input");i.type="file";i.accept=".txt,text/plain";i.style.display="none";i.onchange=async function(){var f=i.files&&i.files[0];i.remove();ok(f&&f.size<8000000?await f.text():null);};i.addEventListener("cancel",function(){i.remove();ok(null);});document.body.appendChild(i);i.click();});}};</script>
   <!-- iPhone: системный жест от края экрана листает историю браузера и выбрасывал из Sabil — гасим его у самого края.
@@ -120,8 +122,19 @@
     }, { passive: false });
     // Двойное касание и щипок не увеличивают страницу.
     document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { passive: false });
+    // Flutter при запуске ставит свой viewport с увеличением до 5×; на iPhone страница, однажды увеличенная,
+    // потом ездит влево-вправо под пальцем. Возвращаем «без увеличения» (и сразу сбрасывает уже увеличенную).
+    var vp = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    function lockViewport() {
+      var m = document.querySelector('meta[name="viewport"]');
+      if (m && m.getAttribute('content') !== vp) m.setAttribute('content', vp);
+    }
+    new MutationObserver(lockViewport).observe(document.head, { childList: true, subtree: true, attributes: true, attributeFilter: ['content'] });
   })();
   </script>
+  <!-- Озвучка (зикры, буквы, имена): Web Audio, каждая запись по своему адресу. Новая запись всегда отменяет
+       старую, даже если та ещё грузится, — поэтому никогда не прозвучит «не та» запись. -->
+  <script>window.sabilVoice=(function(){var bufs={},cur=null,run=0;function ctx(){var x=window.sabilSfx&&window.sabilSfx.ctx&&window.sabilSfx.ctx();if(x)return x;var A=window.AudioContext||window.webkitAudioContext;window.__sv=window.__sv||(A?new A():null);return window.__sv;}function get(url){if(!bufs[url])bufs[url]=fetch(url).then(function(r){if(!r.ok)throw 0;return r.arrayBuffer();}).then(function(a){var x=ctx();return new Promise(function(ok,no){x.decodeAudioData(a,ok,no);});}).catch(function(e){delete bufs[url];throw e;});return bufs[url];}function stop(){run++;if(cur){try{cur.onended=null;cur.stop();}catch(e){}cur=null;}if(window.__svDone){var d=window.__svDone;window.__svDone=null;d(false);}}return{stop:stop,play:function(url){stop();var my=run,x=ctx();if(!x)return Promise.resolve(false);if(x.state!=="running")x.resume();return new Promise(function(done){window.__svDone=done;get(url).then(function(b){if(my!==run)return;var s=x.createBufferSource();s.buffer=b;s.connect(x.destination);s.onended=function(){if(cur===s){cur=null;window.__svDone=null;done(true);}};cur=s;s.start(0);},function(){if(my===run){window.__svDone=null;done(false);}});});}};})();</script>
   <script>window.sabilInset=function(side){var d=document.getElementById("sabil-safe");if(!d)return 0;var v=parseFloat(getComputedStyle(d)["padding-"+side]);return isNaN(v)?0:v;};</script>
   <!--
     You can customize the "flutter_bootstrap.js" script.
